@@ -3,39 +3,33 @@ package main
 import (
 	"log"
 	"net/http"
+	"encoding/json"
+	"fmt"
 
-	"github.com/larsp/co2monitor/meter"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/stmu/co2monitor/meter"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
 	device     = kingpin.Arg("device", "CO2 Meter device, such as /dev/hidraw2").Required().String()
-	listenAddr = kingpin.Arg("listen-address", "The address to listen on for HTTP requests.").
-			Default(":8080").String()
+	listenAddr = kingpin.Arg("listen-address", "The address to listen on for HTTP requests.").Default(":8080").String()
 )
 
 var (
-	temperature = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "meter_temperature_celsius",
-		Help: "Current temperature in Celsius",
-	})
-	co2 = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "meter_co2_ppm",
-		Help: "Current CO2 level (ppm)",
-	})
+	temperature = 0.0
+	co2 = 0
 )
 
-func init() {
-	prometheus.MustRegister(temperature)
-	prometheus.MustRegister(co2)
+
+func Metrics(w http.ResponseWriter, request *http.Request) {
+  
+    w.Write([]byte("Hello, " +  temperature + "!"))
 }
+
 
 func main() {
 	kingpin.Parse()
-	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/metrics", Metrics)
 	go measure()
 	log.Printf("Serving metrics at '%v/metrics'", *listenAddr)
 	log.Fatal(http.ListenAndServe(*listenAddr, nil))
@@ -54,7 +48,7 @@ func measure() {
 		if err != nil {
 			log.Fatalf("Something went wrong: '%v'", err)
 		}
-		temperature.Set(result.Temperature)
-		co2.Set(float64(result.Co2))
+		temperature:= result.Temperature
+		co2 := float64(result.Co2)
 	}
 }

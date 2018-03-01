@@ -5,7 +5,7 @@ build:
 	go build -v
 
 build_pi:
-	GOOS=linux GOARCH=arm GOARM=6 go build -v
+	GOOS=linux GOARCH=arm GOARM=6 go build -v -a
 
 test:
 	go test --race -v ./...
